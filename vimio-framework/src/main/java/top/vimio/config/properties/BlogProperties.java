@@ -1,0 +1,36 @@
+package top.vimio.config.properties;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * @Description: 博客配置(目前用于评论提醒模板中的超链接)
+ * @Author: Vimio
+ * @Date: 2024/9/4 9:42
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Configuration
+@ConfigurationProperties(prefix = "blog")
+public class BlogProperties {
+	/**
+	 * 博客名称
+	 */
+	private String name;
+	/**
+	 * 博客后端接口URL
+	 */
+	private String api;
+	/**
+	 * 博客前端后台管理URL
+	 */
+	private String cms;
+	/**
+	 * 博客前端前台页面URL
+	 */
+	private String view;
+}

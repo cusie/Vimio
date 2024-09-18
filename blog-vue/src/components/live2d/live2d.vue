@@ -1,0 +1,623 @@
+<template>
+  <div>
+    <div v-show="mainShow"
+         class="vue-live2d"
+         ref="vue-live2d"
+         :style="{ width: live2dWidth + 'px', height: live2dHeight + 'px', zIndex: 3000 }"
+         @mouseover="toolShow = true"
+         @mouseout="toolShow = false">
+      <div  >
+        <div class="vue-live2d-tip" v-html="tipText" v-show="tipShow" :style="{top: fixtiptop + 'px'}"></div>
+        <canvas id="vue-live2d-main" ref="vue-live2d-main" :width="live2dWidth" :height="live2dHeight" class="vue-live2d-main"></canvas>
+        <div
+            class="vue-live2d-tool"
+            ref="vue-live2d-tool"
+            v-show="toolShow">
+        <span
+            class="fa fa-lg"
+            v-for="(tool, index) in tools"
+            :key="index"
+            :class="tool.name"
+            @click="tool.click"/>
+        </div>
+      </div>
+
+    </div>
+    <div class="vue-live2d-toggle" ref="vue-live2d-toggle" v-show="!mainShow" @click="mainShow = true" style="zIndex: 3000">
+      <span>珂朵莉</span>
+    </div>
+  </div>
+</template>
+
+
+<script>
+import axios from 'axios'
+import './lib/live2d.min.js'
+import 'font-awesome/css/font-awesome.min.css'
+
+import tips from './options/tips'
+import myModels from './options/myModels'
+export default {
+  name: 'Live2d',
+  props: {
+    model: {
+      default: () => ['Kutori/live', 'kutori.model'],
+      type: Array
+    }
+  },
+  data () {
+    return {
+      tiptop : 20,
+      direction: 'right',
+      apiPath: 'https://vimio.top/live2d-api/indexes',
+      //apiPath: 'https://api.vimio.top/indexes',
+      homePage: 'https://github.com/vi-mio',
+      tips: tips,
+      width: 0,
+      height: 0,
+      size: 500,
+      messageTimer: null,
+      mainShow: true,
+      tipText: '',
+      tipShow: false,
+      toolShow: false,
+      modelPath: 'Potion-Maker/Pio',
+      modelTexturesId: 'school-2017-costume-yellow',
+      myModelId: 0,
+      myModelTexturesId: 0,
+      isMyModels: false,
+      myModelsAdjust: false,
+      tools: [{
+        name: 'fa-comment',
+        click: this.showHitokoto
+       },
+      // {
+      //   name: 'fa-user-circle',
+      //   click: this.chooseLoadRandModel
+      // }, {
+      //   name: 'fa-street-view',
+      //   click: this.chooseLoadRandTextures
+      // }, {
+      //   name: 'fa-camera-retro',
+      //   click: this.takePhoto
+      // },
+        {
+        name: 'fa-info-circle',
+        click: this.openHomePage
+      }, {
+        name: 'fa-times',
+        click: this.close
+      },
+
+        // {
+        //   name: 'fa-chevron-circle-up',
+        //   click: this.modeljia,
+        // },
+        // {
+        //   name: 'fa-chevron-circle-down',
+        //   click: this.modeljian,
+        // },
+        //
+        {
+          name: 'fa-hand-o-up',
+          click: this.tipjia,
+        },
+        {
+          name: 'fa-hand-o-down',
+          click: this.tipjian,
+        },
+      ]
+    }
+  },
+  mounted () {
+    [this.modelPath, this.modelTexturesId] = this.model
+    this.loadModel()
+    this.setDirection()
+    this.$nextTick(function () {
+      this.loadEvent()
+    })
+  },
+  computed: {
+    live2dWidth () {
+      return this.width ? this.width : 350
+    },
+    live2dHeight () {
+      return this.height ? this.height : this.size
+    },
+    fixtiptop(){
+      return this.tiptop ? this.tiptop : 20
+    },
+  },
+  watch: {
+    mainShow () {
+      const containers = ['vue-live2d']
+      const refs = this.$refs
+      containers.forEach(containerName => {
+        refs[containerName].classList.toggle(`${containerName}-on-${this.direction}`)
+      })
+    },
+    direction () {
+      this.setDirection()
+    },
+    width () {
+      this.changeLive2dSize()
+    },
+    height () {
+      this.changeLive2dSize()
+    },
+    size () {
+      if (this.width || this.height) return
+      this.changeLive2dSize()
+    }
+  },
+  methods: {
+    modeljia(){
+      this.size = this.size + 10;
+
+    },
+    modeljian(){
+      this.size = this.size - 10;
+    },
+    tipjia(){
+      this.tiptop = this.tiptop - 10;
+    },
+    tipjian(){
+      this.tiptop = this.tiptop + 10;
+    },
+    changeLive2dSize () {
+      const { live2dWidth: width, live2dHeight: height } = this
+      // 不知还有调整宽高的好方法没？
+      document.querySelector('.vue-live2d-main').outerHTML = `<canvas id="vue-live2d-main" width="${width}" height="${height}" class="vue-live2d-main"></canvas>`
+      //更新高度后需重新加载模型，否则会无法显示
+      this.chooseLoadModel()
+    },
+    setDirection () {
+      const containers = ['vue-live2d', 'vue-live2d-tool', 'vue-live2d-toggle']
+      const refs = this.$refs
+      const addClassPostFix = this.direction
+      const removeClassPostFix = this.direction === 'left' ? 'right' : 'left'
+      containers.forEach(containerName => {
+        refs[containerName].classList.remove(`${containerName}-on-${removeClassPostFix}`)
+        refs[containerName].classList.add(`${containerName}-on-${addClassPostFix}`)
+      })
+    },
+    loadModel () {
+      const { apiPath, modelPath, modelTexturesId } = this
+      const url = `${apiPath}/${modelPath}/${modelTexturesId}.json`
+      window.loadlive2d("vue-live2d-main", url)
+      console.log(`Live2D 模型 ${modelPath}-${modelTexturesId} 加载完成`)
+    },
+    myLoadModel () {
+      const {  myModelId, myModelTexturesId } = this
+      const {myModel} = myModels
+      //随机模型id，确保下次模型id不与当前重复
+      const url = myModel[myModelId][myModelTexturesId]
+      window.loadlive2d("vue-live2d-main", url)
+      console.log(`myLive2D 模型 ${myModelId}-${myModelTexturesId} 加载完成`)
+    },
+    chooseLoadModel(){
+      this.myModelsAdjust ? this.myLoadModel() : this.loadModel()
+    },
+    chooseLoadRandModel(){
+      this.isMyModels ? this.myLoadRandModel() : this.loadRandModel()
+    },
+    loadRandModel () {
+      this.http({
+        url: `${this.apiPath}/models.json`,
+        success: (data) => {
+          const models = data.filter(({ modelPath }) => modelPath !== this.modelPath)
+          const { modelPath, modelIntroduce } = models[Math.floor(Math.random() * models.length)]
+          this.modelPath = modelPath
+          this.showMessage(`${modelIntroduce}`, 4000)
+          this.loadRandTextures(true)
+          //定义下次按钮触发为新接口
+          this.isMyModels = true;
+          //定义调整高度按钮为原模型
+          this.myModelsAdjust = false;
+        }
+      })
+    },
+    myLoadRandModel () {
+      const {myModel,myMessage} = myModels
+      //随机模型id，确保下次模型id不与当前重复
+      while(true){
+        if(myModel.length <= 1){
+          break;
+        }
+        const tempMyModelId = Math.floor(Math.random() * myModel.length + 1)-1;
+        if(this.myModelId != tempMyModelId){
+          this.myModelId = tempMyModelId;
+          break;
+        }
+      }
+
+      //出场语句
+      this.showMessage(myMessage[0], 4000)
+      //挑选随机模型皮肤
+      this.myLoadRandTextures(true)
+      //定义下次按钮触发为原接口
+      this.isMyModels = false;
+      //定义调整高度按钮为新模型
+      this.myModelsAdjust = true;
+    },
+    chooseLoadRandTextures(){
+      this.myModelsAdjust ? this.myLoadRandTextures() : this.loadRandTextures()
+    },
+    loadRandTextures (isAfterRandModel = false) {
+      this.http({
+        url: `${this.apiPath}/${this.modelPath}/textures.json`,
+        success: (data) => {
+          const modelTexturesIds = data.filter(modelTexturesId => modelTexturesId !== this.modelTexturesId)
+          this.modelTexturesId = modelTexturesIds[Math.floor(Math.random() * modelTexturesIds.length)]
+          this.loadModel()
+          if (!isAfterRandModel) {
+            this.showMessage('我的新衣服好看嘛？', 4000)
+          }
+        }
+      })
+    },
+    myLoadRandTextures (isAfterRandModel = false) {
+      const {myModel} = myModels
+      //随机皮肤id,确保下次皮肤不与当前重复(只有一个皮肤时不更换皮肤)
+      while(myModel[this.myModelId].length != 1){
+        const tempMyModelTexturesId = Math.floor(Math.random() * myModel[this.myModelId].length + 1)-1;
+        if(this.myModelTexturesId != tempMyModelTexturesId){
+          this.myModelTexturesId = tempMyModelTexturesId;
+          break;
+        }
+      }
+      //加载模型
+      this.myLoadModel()
+      if (!isAfterRandModel) {
+        this.showMessage('我的新衣服好看嘛？', 4000)
+      }
+
+    },
+    showMessage (msg = '', timeout = 6000) {
+      if (this.messageTimer) {
+        clearTimeout(this.messageTimer)
+        this.messageTimer = null
+      } else {
+        this.tipShow = true
+      }
+      this.tipText = msg
+      this.messageTimer = setTimeout(() => {
+        this.tipShow = false
+        this.messageTimer = null
+      }, timeout)
+    },
+    takePhoto () {
+      this.showMessage('照好了嘛，留个纪念吖~')
+      window.Live2D.captureName = 'photo.png'
+      window.Live2D.captureFrame = true
+    },
+    showHitokoto () {
+      // n取0-2（2代表default）
+      const n = Math.floor(Math.random() * 3 + 1)-1;
+      switch(n){
+        case 0 :
+          console.log("接口0");
+          axios.get('https://api.fghrsh.net/hitokoto/rand/?encode=jsc&uid=3335').then((res) => {
+            const {hitokoto} = res.data
+            console.log(res);
+            this.showMessage(`${hitokoto}`)
+          }).catch(function (err) {
+            console.log(err)
+          })
+          break;
+        case 1 :
+          console.log("接口1");
+          const jinrishici = require('jinrishici');
+          jinrishici.load(result => {
+            console.log(result);
+            const {content} = result.data
+            this.showMessage(`${content}`)
+          });
+          break;
+        default :
+          console.log("接口default");
+          axios.get('https://v1.hitokoto.cn').then((res) => {
+            const { hitokoto } = res.data
+            console.log(res);
+            this.showMessage(`${hitokoto}`)
+          }).catch(function (err) {
+            console.log(err)
+          })
+      }
+
+    },
+    openHomePage () {
+      open(this.homePage)
+    },
+    close () {
+      this.mainShow = false
+    },
+    loadEvent () {
+      for (const event in this.tips) {
+        for (const obj of this.tips[event]) {
+          const { selector, texts } = obj
+          const dom = selector === 'document' ? document : document.querySelector(selector)
+          if (dom == null) continue
+
+          dom.addEventListener(event, () => {
+            const msg = texts[Math.floor(Math.random() * texts.length)]
+            this.showMessage(msg, 2000)
+          })
+        }
+      }
+    },
+    http ({ url, success }) {
+      const xhr = new XMLHttpRequest()
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if ((xhr.status >= 200 || xhr.status < 300) || xhr.status === 304) {
+            success && success(JSON.parse(xhr.response))
+          } else {
+            console.error(xhr)
+          }
+        }
+      }
+      xhr.open('GET', url)
+      xhr.send(null)
+    }
+  }
+}
+</script>
+
+<style scoped>
+/* live2d */
+.vue-live2d {
+  transform: translateY(0);
+  transition: transform .3s ease-in-out;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+
+
+}
+.vue-live2d-on-left:hover {
+  transform: translateX(21px);
+}
+.vue-live2d-on-right:hover {
+  transform: translateX(-21px);
+}
+
+/* live2d-tip */
+.vue-live2d-tip {
+  position: absolute;
+  width: 60%;
+  min-height: 5rem;
+  line-height: 1.5rem;
+  margin-top: -88px;
+  padding: 5px 10px;
+  font-size: 15px;
+  word-break: break-all;
+  text-overflow: ellipsis;
+  border: 1px solid rgba(255, 137, 255, 0.4);
+  border-radius: 12px;
+  background-color: rgba(98, 200, 248, 0.87);
+  box-shadow: 0 3px 15px 2px rgba(0, 177, 255, 0.87);
+  animation: shake 50s ease-in-out 5s infinite;
+  font-family: 华文楷体;
+  color: rgba(255, 255, 255, 1);
+
+}
+
+/* live2d-main */
+.vue-live2d-main {
+  cursor: grab;
+  cursor: -webkit-grab;
+  cursor: -o-grab;
+  cursor: -ms-grab;
+}
+
+/* live2d-tool */
+.vue-live2d-tool {
+  position: absolute;
+  width: 30px;
+  right: 15px; /* 距离右侧 15 像素，可根据实际情况调整 */
+  bottom: 50%; /* 底部位于视口的中间 */
+  transform: translateY(50%); /* 向上移动自身高度的 50% */
+  color: rgb(255, 248, 248);
+  text-align: center;
+  cursor: pointer;
+}
+
+.vue-live2d-tool-on-left {
+  left: -18px;
+}
+
+.vue-live2d-tool-on-right {
+  right: -18px;
+}
+
+.vue-live2d-tool span {
+  display: block;
+  line-height: 30px;
+}
+
+.vue-live2d-tool span:hover {
+  color: #309bf4;
+}
+
+/* live2d-toggle */
+.vue-live2d-toggle {
+  width: 1.5rem;
+  position: fixed;
+  bottom: 30%;
+  right: 1rem;
+  transform: translateY(50%);
+  padding: .3rem 0;
+  writing-mode: vertical-lr;
+  color: #fff;
+  background-color: rgba(122, 212, 250, 0.87);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.vue-live2d-toggle-on-left {
+  left: 0;
+  border-radius: 0 .5rem .5rem 0;
+}
+
+.vue-live2d-toggle-on-right {
+  right: 0;
+  border-radius: .5rem 0 0 .5rem;
+}
+
+.vue-live2d-toggle:hover {
+  width: 1.7rem;
+}
+@keyframes shake {
+  2% {
+    transform: translate(0.5px, -1.5px) rotate(-0.5deg);
+  }
+  4% {
+    transform: translate(0.5px, 1.5px) rotate(1.5deg);
+  }
+  6% {
+    transform: translate(1.5px, 1.5px) rotate(1.5deg);
+  }
+  8% {
+    transform: translate(2.5px, 1.5px) rotate(0.5deg);
+  }
+  10% {
+    transform: translate(0.5px, 2.5px) rotate(0.5deg);
+  }
+  12% {
+    transform: translate(1.5px, 1.5px) rotate(0.5deg);
+  }
+  14% {
+    transform: translate(0.5px, 0.5px) rotate(0.5deg);
+  }
+  16% {
+    transform: translate(-1.5px, -0.5px) rotate(1.5deg);
+  }
+  18% {
+    transform: translate(0.5px, 0.5px) rotate(1.5deg);
+  }
+  20% {
+    transform: translate(2.5px, 2.5px) rotate(1.5deg);
+  }
+  22% {
+    transform: translate(0.5px, -1.5px) rotate(1.5deg);
+  }
+  24% {
+    transform: translate(-1.5px, 1.5px) rotate(-0.5deg);
+  }
+  26% {
+    transform: translate(1.5px, 0.5px) rotate(1.5deg);
+  }
+  28% {
+    transform: translate(-0.5px, -0.5px) rotate(-0.5deg);
+  }
+  30% {
+    transform: translate(1.5px, -0.5px) rotate(-0.5deg);
+  }
+  32% {
+    transform: translate(2.5px, -1.5px) rotate(1.5deg);
+  }
+  34% {
+    transform: translate(2.5px, 2.5px) rotate(-0.5deg);
+  }
+  36% {
+    transform: translate(0.5px, -1.5px) rotate(0.5deg);
+  }
+  38% {
+    transform: translate(2.5px, -0.5px) rotate(-0.5deg);
+  }
+  40% {
+    transform: translate(-0.5px, 2.5px) rotate(0.5deg);
+  }
+  42% {
+    transform: translate(-1.5px, 2.5px) rotate(0.5deg);
+  }
+  44% {
+    transform: translate(-1.5px, 1.5px) rotate(0.5deg);
+  }
+  46% {
+    transform: translate(1.5px, -0.5px) rotate(-0.5deg);
+  }
+  48% {
+    transform: translate(2.5px, -0.5px) rotate(0.5deg);
+  }
+  50% {
+    transform: translate(-1.5px, 1.5px) rotate(0.5deg);
+  }
+  52% {
+    transform: translate(-0.5px, 1.5px) rotate(0.5deg);
+  }
+  54% {
+    transform: translate(-1.5px, 1.5px) rotate(0.5deg);
+  }
+  56% {
+    transform: translate(0.5px, 2.5px) rotate(1.5deg);
+  }
+  58% {
+    transform: translate(2.5px, 2.5px) rotate(0.5deg);
+  }
+  60% {
+    transform: translate(2.5px, -1.5px) rotate(1.5deg);
+  }
+  62% {
+    transform: translate(-1.5px, 0.5px) rotate(1.5deg);
+  }
+  64% {
+    transform: translate(-1.5px, 1.5px) rotate(1.5deg);
+  }
+  66% {
+    transform: translate(0.5px, 2.5px) rotate(1.5deg);
+  }
+  68% {
+    transform: translate(2.5px, -1.5px) rotate(1.5deg);
+  }
+  70% {
+    transform: translate(2.5px, 2.5px) rotate(0.5deg);
+  }
+  72% {
+    transform: translate(-0.5px, -1.5px) rotate(1.5deg);
+  }
+  74% {
+    transform: translate(-1.5px, 2.5px) rotate(1.5deg);
+  }
+  76% {
+    transform: translate(-1.5px, 2.5px) rotate(1.5deg);
+  }
+  78% {
+    transform: translate(-1.5px, 2.5px) rotate(0.5deg);
+  }
+  80% {
+    transform: translate(-1.5px, 0.5px) rotate(-0.5deg);
+  }
+  82% {
+    transform: translate(-1.5px, 0.5px) rotate(-0.5deg);
+  }
+  84% {
+    transform: translate(-0.5px, 0.5px) rotate(1.5deg);
+  }
+  86% {
+    transform: translate(2.5px, 1.5px) rotate(0.5deg);
+  }
+  88% {
+    transform: translate(-1.5px, 0.5px) rotate(1.5deg);
+  }
+  90% {
+    transform: translate(-1.5px, -0.5px) rotate(-0.5deg);
+  }
+  92% {
+    transform: translate(-1.5px, -1.5px) rotate(1.5deg);
+  }
+  94% {
+    transform: translate(0.5px, 0.5px) rotate(-0.5deg);
+  }
+  96% {
+    transform: translate(2.5px, -0.5px) rotate(-0.5deg);
+  }
+  98% {
+    transform: translate(-1.5px, -1.5px) rotate(-0.5deg);
+  }
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+</style>

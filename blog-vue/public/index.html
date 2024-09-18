@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><!--	设置浏览器的兼容性模式，这里指定为最新的 IE 版本。-->
+	<meta name="viewport" content="width=device-width,initial-scale=1.0"><!--设置移动设备的视窗（viewport），使页面在不同设备上能够正确显示，并且初始缩放比例为 1.0。 -->
+	<link rel="icon" href="<%= BASE_URL %>favicon.ico"><!--是一个模板引擎（例如 Vue.js）中用来动态生成网址的占位符。-->
+	<title>Vimio</title>
+    <link rel="stylesheet" href="https://cdn.jsdmirror.com/gh/vi-mio/resources/css/prism.min.css"><!--引入一个外部样式表文件 prism.css，路径可能由模板引擎动态生成。-->
+	<link rel="stylesheet" href="https://cdn.jsdmirror.com/gh/vi-mio/resources/css/APlayer.min.css">
+	<!--引入来自 CDN 的外部样式表文件 APlayer.min.css，用于加载一个播放器的样式
+	-->
+</head>
+<body>
+	<noscript>
+		<strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+	</noscript>
+	<!--<noscript>：这个标签用于在浏览器不支持或禁用JavaScript时显示备用内容。
+		<strong>：用来加粗显示文本内容。
+		<%= htmlWebpackPlugin.options.title %>：这是一个模板引擎（如Webpack）的语法，用来插入Webpack插件的配置项中的网页标题。
+	-->
+	<div id="app"></div><!--	-->
+    <script src="https://cdn.jsdmirror.com/gh/vi-mio/resources/js/prism.min.js" data-manual></script><!--引入来自CDN的 APlayer.min.js 文件，用于加载一个音乐播放器。-->
+	<script src="https://cdn.jsdmirror.com/gh/vi-mio/resources/js/APlayer.min.js"></script><!--定义了一个JavaScript变量 meting_api，这个变量存储了一个音乐播放器API的地址，参数可能由具体的使用场景动态填充。-->
+	<script src="https://cdn.jsdmirror.com/gh/vi-mio/resources/js/Meting.min.js"></script><!--引入外部的 Meting.min.js 文件，可能是一个封装了音乐播放器功能的JavaScript库。-->
+	<script src="https://cdn.jsdmirror.com/gh/vi-mio/resources/js/tocbot.min.js"></script><!--引入来自CDN的 tocbot.min.js 文件，用于生成和管理页面的目录。-->
+</body>
+</html>

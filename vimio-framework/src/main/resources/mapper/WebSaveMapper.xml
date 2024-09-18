@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.vimio.mapper.WebSaveMapper">
+    <resultMap id="websave" type="top.vimio.entity.WebSave">
+        <id property="id" column="id"/>
+        <result property="webname" column="webname"/>
+        <result property="description" column="description"/>
+        <result property="website" column="website"/>
+        <result property="avatar" column="avatar"/>
+        <result property="views" column="views"/>
+        <result property="type" column="type"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <!--查询友链List-->
+    <select id="getWebSaveList" resultMap="websave">
+        select id, webname, description, website, avatar, type, views, create_time from websites
+    </select>
+
+    <!-- 按类型查询友链List -->
+    <select id="getWebSaveListByType" resultMap="websave">
+        select id, webname, description, website, avatar, type, views, create_time
+        from websites
+        where type = #{type}
+    </select>
+
+    <resultMap id="websaveVo" type="top.vimio.model.blogvo.vo.WebSaveVo">
+        <result property="webname" column="webname"/>
+        <result property="description" column="description"/>
+        <result property="website" column="website"/>
+        <result property="avatar" column="avatar"/>
+        <result property="type" column="type"/>
+    </resultMap>
+
+    <!--查询网站链链VO List-->
+    <select id="getWebSaveVoList" resultMap="websaveVo">
+        select webname, description, website, avatar from websites where type=#{type} order by rand()
+    </select>
+
+    <!--增加网站浏览次数-->
+    <update id="updateViewsByWebname">
+        update websites set views=views+1 where webname=#{webname}
+    </update>
+
+    <!--添加网站链-->
+    <insert id="saveWebsite" parameterType="top.vimio.entity.WebSave" useGeneratedKeys="true" keyProperty="id">
+        insert into websites (webname, description, website, avatar, type, views, create_time)
+        values (#{webname}, #{description}, #{website}, #{avatar}, #{type}, #{views}, #{createTime})
+    </insert>
+
+    <!--更新网站链-->
+    <update id="updateWebsite">
+        update websites set webname=#{webname}, description=#{description}, website=#{website}, avatar=#{avatar}, type=#{type}
+        where id=#{id}
+    </update>
+
+    <!--按id删除网站链-->
+    <delete id="deleteWebsite">
+        delete from websites where id=#{id}
+    </delete>
+
+</mapper>
