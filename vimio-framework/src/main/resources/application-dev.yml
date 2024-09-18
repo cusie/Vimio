@@ -1,0 +1,69 @@
+spring:
+  profiles:
+    active: dev
+devtools:
+  restart:
+    exclude: static/**,public/**,config/application.yml
+    enabled: true
+  mail:
+    host: smtp.126.com
+    port: 465
+    username: he2328806287@126.com
+    password:
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: true
+            required: true
+          auth: true
+          starttls:
+            enable: true
+            required: true
+token:
+  expireTime: 259200000
+  secretKey: 
+
+comment:
+  notify:
+    channel: mail
+  default-open: true
+tg:
+  bot:
+    api: https://api.telegram.org/bot
+    token: 1234567890:qwertyuiopasdfghjklzxcvbnm
+    chat-id: 1234567890
+    use-proxy: false
+    use-reverse-proxy: true
+    reverse-proxy-url:  https://tg-api-open.naccl.workers.dev
+
+http:
+  proxy:
+    server:
+      host: 127.0.0.1
+      port: 7890
+      timeout: 10000
+upload:
+  channel: local
+  file:
+    path: /Users/vimio/Desktop/upload/
+    access-path: /image/**
+    resources-locations: file:${upload.file.path}
+
+  github:
+    token:
+    username:
+    repos:
+    repos-path:
+  qiniu:
+    access-key:
+    secret-key:
+    bucket-name:
+    path:
+    domain:
+  upyun:
+    bucket-name:
+    username:
+    password:
+    path:
+    domain:
